@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { DISH_IMAGES } from "@/lib/images";
 
 const features = [
   "Real-time view of today's active menu and remaining portion counters",
@@ -67,8 +68,8 @@ export default function DailyModel() {
               <div className="rounded-xl overflow-hidden border border-light-outline-variant/60">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src="https://lh3.googleusercontent.com/aida/ALJJyrBVHd3JRTt0SvVuUxBOLYdJlO66bp3hdDysv23kuDgjXnWIV3DYo-GSdMEcl4uX3W5DM_CxfwX4yyWHJxvBE0r2cKYaT0CAjK2C7axuYxCDJ8JojTNq2KS4v031qmN9m6r03tjVvHgQYR07wmJ5gpPQ0-TlhHVHOe7ClM-Ja6wymJgKXDT2b0jQub8avLVsVR3hR4i964zy0d3vmtCQAooKsnQyer83VHjZvoDI2Qo7PkbDlWGbEKLMfkA"
-                  alt="Fish"
+                  src={DISHIMAGES.croaker}
+                  alt="fish"
                   className="w-full h-32 object-cover"
                 />
                 <div className="p-3 bg-light-surface">
