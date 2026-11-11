@@ -12,10 +12,12 @@ export function lagosDayStart(dateStr: string): Date {
 }
 
 /** Start (UTC) of "today" in Lagos. */
+/** Start (UTC) of "today" in Lagos. */
 export function lagosTodayStart(): Date {
-  return new Date(nowInLagos().setHours(0, 0, 0, 0));
+  const lagosNow = nowInLagos();
+  lagosNow.setUTCHours(0, 0, 0, 0);
+  return new Date(lagosNow.getTime() - LAGOS_OFFSET_MS);
 }
-
 /** End (exclusive) of "today" in Lagos. */
 export function lagosTodayEnd(): Date {
   return new Date(lagosTodayStart().getTime() + 24 * 60 * 60 * 1000);
