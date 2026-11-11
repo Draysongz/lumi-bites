@@ -11,7 +11,7 @@ const dishes = [
     rating: "4.9 (148)",
     time: "30-40 min",
     timeLabel: "Spicy",
-    img: DISH_IMAGES.croaker,
+    img: DISH_IMAGES.egusi,
   },
   {
     name: "Smokey Party Jollof & Grilled Chicken",
