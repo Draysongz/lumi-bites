@@ -1,0 +1,10 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Full-bleed background (OS applies its own mask shape) -->
+  <rect width="512" height="512" fill="#E61E14"/>
+  <!-- Mark centered at ~58% size for safe-zone padding -->
+  <g transform="translate(256,256) scale(3.0) translate(-50,-50)" fill="#FFFFFF">
+    <path d="M50,15 C45,35 25,45 15,65 C10,75 18,90 35,90 C50,90 55,75 65,55 C72,40 85,30 70,15 Z"/>
+    <circle cx="80" cy="65" r="10"/>
+    <circle cx="20" cy="30" r="7"/>
+  </g>
+</svg>

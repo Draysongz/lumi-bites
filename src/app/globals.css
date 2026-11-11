@@ -1,0 +1,207 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* Brand */
+  --color-brand-red: #E61E14;
+  --color-brand-yellow: #F9A825;
+  --color-brand-dark: #1A1716;
+  --color-accent: #F9A825;
+  --color-success: #15803D;
+  --color-warning: #D97706;
+  --color-error: #DC2626;
+
+  /* Light scheme (Material 3-ish) */
+  --color-light-primary: #B91C1C;
+  --color-light-on-primary: #FFFFFF;
+  --color-light-primary-container: #FEE2E2;
+  --color-light-on-primary-container: #7F1D1D;
+  --color-light-secondary: #B45309;
+  --color-light-on-secondary: #FFFFFF;
+  --color-light-secondary-container: #FEF3C7;
+  --color-light-on-secondary-container: #78350F;
+  --color-light-surface: #FFFDF9;
+  --color-light-on-surface: #1F1D1B;
+  --color-light-surface-container-low: #FBF7F0;
+  --color-light-surface-container: #F5EFE6;
+  --color-light-surface-container-high: #EFE6D9;
+  --color-light-outline: #857870;
+  --color-light-outline-variant: #D8CEC6;
+
+  /* Dark scheme */
+  --color-dark-primary: #F87171;
+  --color-dark-on-primary: #450A0A;
+  --color-dark-primary-container: #7F1D1D;
+  --color-dark-on-primary-container: #FECACA;
+  --color-dark-secondary: #FBBF24;
+  --color-dark-on-secondary: #451A03;
+  --color-dark-secondary-container: #78350F;
+  --color-dark-on-secondary-container: #FDE68A;
+  --color-dark-surface: #181615;
+  --color-dark-on-surface: #EDE9E6;
+  --color-dark-surface-container-low: #211F1D;
+  --color-dark-surface-container: #2B2826;
+  --color-dark-surface-container-high: #363230;
+  --color-dark-outline: #A1958D;
+  --color-dark-outline-variant: #4C4642;
+
+  /* Radii */
+  --radius-sm: 6px;
+  --radius-DEFAULT: 12px;
+  --radius-md: 16px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-full: 9999px;
+
+  /* Spacing */
+  --spacing-gutter-xs: 4px;
+  --spacing-gutter-sm: 8px;
+  --spacing-gutter-md: 16px;
+  --spacing-gutter-lg: 24px;
+  --spacing-gutter-xl: 32px;
+  --spacing-section: 40px;
+  --spacing-page-margin: 16px;
+
+  /* Fonts — reference the self-hosted family names that next/font registers */
+  --font-display: "Outfit", "Outfit Fallback", sans-serif;
+  --font-headline: "Outfit", "Outfit Fallback", sans-serif;
+  --font-body: "Plus Jakarta Sans", "Plus Jakarta Sans Fallback", sans-serif;
+  --font-label: "Plus Jakarta Sans", "Plus Jakarta Sans Fallback", sans-serif;
+
+  /* Type scale */
+  --text-display-lg: 40px;
+  --text-display-lg--line-height: 48px;
+  --text-display-lg--letter-spacing: -0.5px;
+  --text-display-lg--font-weight: 800;
+
+  --text-display-lg-mobile: 32px;
+  --text-display-lg-mobile--line-height: 40px;
+  --text-display-lg-mobile--letter-spacing: -0.3px;
+  --text-display-lg-mobile--font-weight: 800;
+
+  --text-display-md: 36px;
+  --text-display-md--line-height: 44px;
+  --text-display-md--letter-spacing: -0.4px;
+  --text-display-md--font-weight: 700;
+
+  --text-display-md-mobile: 28px;
+  --text-display-md-mobile--line-height: 36px;
+  --text-display-md-mobile--letter-spacing: -0.2px;
+  --text-display-md-mobile--font-weight: 700;
+
+  --text-headline-lg: 32px;
+  --text-headline-lg--line-height: 40px;
+  --text-headline-lg--letter-spacing: -0.3px;
+  --text-headline-lg--font-weight: 700;
+
+  --text-headline-lg-mobile: 24px;
+  --text-headline-lg-mobile--line-height: 32px;
+  --text-headline-lg-mobile--letter-spacing: -0.2px;
+  --text-headline-lg-mobile--font-weight: 700;
+
+  --text-headline-md: 22px;
+  --text-headline-md--line-height: 28px;
+  --text-headline-md--letter-spacing: -0.15px;
+  --text-headline-md--font-weight: 700;
+
+  --text-headline-sm: 18px;
+  --text-headline-sm--line-height: 24px;
+  --text-headline-sm--font-weight: 600;
+
+  --text-body-lg: 16px;
+  --text-body-lg--line-height: 24px;
+  --text-body-lg--font-weight: 400;
+
+  --text-body-md: 14px;
+  --text-body-md--line-height: 20px;
+  --text-body-md--font-weight: 400;
+
+  --text-body-sm: 12px;
+  --text-body-sm--line-height: 16px;
+  --text-body-sm--font-weight: 400;
+
+  --text-label-lg: 14px;
+  --text-label-lg--line-height: 20px;
+  --text-label-lg--letter-spacing: 0.1px;
+  --text-label-lg--font-weight: 600;
+
+  --text-label-md: 12px;
+  --text-label-md--line-height: 16px;
+  --text-label-md--letter-spacing: 0.2px;
+  --text-label-md--font-weight: 600;
+
+  --text-label-sm: 10px;
+  --text-label-sm--line-height: 14px;
+  --text-label-sm--letter-spacing: 0.3px;
+  --text-label-sm--font-weight: 600;
+
+  /* Transitions */
+  --transition-duration-state-change: 120ms;
+  --transition-duration-surface-enter: 220ms;
+  --transition-duration-surface-exit: 150ms;
+
+  --transition-delay-state-change: 0ms;
+  --transition-delay-surface-enter: 0ms;
+  --transition-delay-surface-exit: 0ms;
+
+  --transition-timing-function-state-change: ease-out;
+  --transition-timing-function-surface-enter: cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-timing-function-surface-exit: cubic-bezier(0.4, 0, 1, 1);
+}
+
+body {
+  background-color: var(--color-light-surface);
+  color: var(--color-light-on-surface);
+  font-family: var(--font-body);
+}
+
+/* Material Symbols icon font (loaded via Google stylesheet in layout head) */
+.material-symbols-outlined {
+  font-family: "Material Symbols Outlined";
+  font-weight: normal;
+  font-style: normal;
+  display: inline-block;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+}
+
+/* Hero mockup auto-scroll (ping-pong: down then back up) */
+.mockup-scroll-track {
+  display: flex;
+  flex-direction: column;
+  animation: mockup-scroll 8s ease-in-out infinite alternate;
+}
+
+.mockup-scroll-track:hover {
+  animation-play-state: paused;
+}
+
+@keyframes mockup-scroll {
+  from {
+    transform: translateY(50);
+  }
+  to {
+    transform: translateY(-500px);
+  }
+}
+
+/* Food doodle & brand pattern (hero/dark sections) */
+.bg-food-doodle {
+  background-color: #1A1716;
+  background-image:
+    radial-gradient(circle at 10px 10px, rgba(230, 30, 20, 0.25) 1.5px, transparent 0),
+    radial-gradient(circle at 30px 30px, rgba(249, 168, 37, 0.25) 1.5px, transparent 0);
+  background-size: 40px 40px;
+}
+
+::selection {
+  background-color: var(--color-brand-red);
+  color: #ffffff;
+}

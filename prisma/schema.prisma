@@ -1,0 +1,274 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --- NextAuth (v5) ---
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  phone         String?   @unique
+  role          Role      @default(CUSTOMER)
+  passwordHash  String?
+
+  accounts    Account[]
+  sessions    Session[]
+  customer    Customer?
+  orders      Order[]
+  bookings    CateringBooking[]
+  notifications Notification[]
+  pushSubscriptions PushSubscription[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// --- Lumi's Bites domain ---
+
+model Customer {
+  id      String @id @default(cuid())
+  userId  String @unique
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  virtualAccount VirtualAccount?
+
+  createdAt DateTime @default(now())
+}
+
+// Dedicated NGN virtual account (Paystack)
+model VirtualAccount {
+  id             String  @id @default(cuid())
+  customerId     String  @unique
+  customer       Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  paystackCustomerId   String // Paystack customer code (CUS_xxx)
+  dedicatedAccountId   Int?   // Paystack dedicated_account_id
+  accountNumber        String?
+  bankName             String?
+  active               Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Menu for a specific day
+model DayMenu {
+  id     String  @id @default(cuid())
+  date   DateTime @unique
+  active Boolean @default(true)
+  dailyNote String?
+
+  items MenuItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model MenuItem {
+  id        String  @id @default(cuid())
+  dayMenuId String
+  dayMenu   DayMenu @relation(fields: [dayMenuId], references: [id], onDelete: Cascade)
+
+  name        String
+  description String?
+  priceKobo   Int // price in kobo (NGN × 100) to avoid float rounding
+  available   Boolean @default(true)
+  imageUrl    String?
+  rating      Float?
+  portionsLeft Int?
+  category    String?
+
+  orderItems OrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([dayMenuId])
+}
+
+model Order {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  status      OrderStatus @default(PENDING)
+  pickupDate  DateTime?   @db.Date // pre-order target day
+  totalKobo   Int
+
+  items       OrderItem[]
+  transaction Transaction?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  CONFIRMED
+  READY
+  COMPLETED
+  CANCELLED
+}
+
+model OrderItem {
+  id        String @id @default(cuid())
+  orderId   String
+  order     Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  menuItemId String
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
+
+  quantity Int
+  unitKobo Int // snapshot of price at order time
+
+  @@index([orderId])
+}
+
+// Payment state, keyed to a provider transaction reference
+model Transaction {
+  id        String @id @default(cuid())
+  orderId   String @unique
+  order     Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  reference     String @unique // provider tx_ref / Paystack-style reference
+  amountKobo    Int
+  status        TransactionStatus @default(PENDING)
+  channel       String? // card, bank_transfer, etc.
+  paidAt        DateTime?
+  paystackEvent String?  @db.Text // raw webhook payload for audit
+
+  // Dynamic (per-transaction) virtual-account details from Flutterwave.
+  accountNumber String?
+  accountExpires DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum TransactionStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REVERSED
+}
+
+// Catering / events booking
+model CateringBooking {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  eventDate   DateTime
+  eventType   String
+  guestCount  Int
+  notes       String?  @db.Text
+  quoteKobo   Int?
+  depositKobo Int? // optional part-payment for events
+  status      BookingStatus @default(INQUIRY)
+  reference   String? @unique // Paystack reference when a deposit is taken
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+enum BookingStatus {
+  INQUIRY
+  QUOTED
+  DEPOSIT_PAID
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+// In-app user notification (also the source of truth for optional web-push).
+model Notification {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type   NotificationType
+  title  String
+  body   String
+  link   String?
+  readAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
+
+enum NotificationType {
+  ORDER
+  PAYMENT
+  CATERING
+  SYSTEM
+}
+
+// A browser PushSubscription for Web Push (one user may have multiple devices).
+model PushSubscription {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  endpoint String @unique
+  p256dh   String
+  auth     String
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
