@@ -68,7 +68,7 @@ export default function DailyModel() {
               <div className="rounded-xl overflow-hidden border border-light-outline-variant/60">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={DISHIMAGES.croaker}
+                  src={DISH_IMAGES.croaker}
                   alt="fish"
                   className="w-full h-32 object-cover"
                 />
