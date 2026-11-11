@@ -1,4 +1,4 @@
-import { DISH_IMAGES } from "@/lib/dishImages"; // adjust path
+import { DISH_IMAGES } from "@/lib/images"; // adjust path
 
 
 
