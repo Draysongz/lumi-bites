@@ -1,14 +1,7 @@
 import Link from "next/link";
 import { DISH_IMAGES } from "@/lib/dishImages";
 
-// Jollof
-<img src={DISH_IMAGES.jollof} alt="Smokey Party Jollof" ... />
-// Suya
-<img src={DISH_IMAGES.suya} alt="Spicy Beef Suya" ... />
-// Croaker
-<img src={DISH_IMAGES.croaker} alt="Signature Grilled Croaker" ... />
-// Egusi
-<img src={DISH_IMAGES.egusi} alt="Rich Egusi Soup" ... />
+
   
 export default function About() {
   return (
