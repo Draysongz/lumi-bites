@@ -1,10 +1,10 @@
 {
-  "id": "/",
+  "id": "/app",
   "name": "Lumi's Bites — Fresh Nigerian Comfort Food",
   "short_name": "Lumi's Bites",
   "description": "Order fresh Nigerian comfort food for pre-order pickup and delivery, or book catering for your events. Fast and yummy, good for your tummy.",
-  "start_url": "/",
-  "scope": "/",
+  "start_url": "/app",
+  "scope": "/app",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#FFFDF9",

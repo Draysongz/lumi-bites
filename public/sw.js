@@ -1,6 +1,6 @@
 /* Lumi's Bites service worker — offline shell + installability + push. */
-const CACHE = "lumis-bites-v1";
-const SHELL = ["/", "/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png"];
+const CACHE = "lumis-bites-v2";
+const SHELL = ["/app", "/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -31,13 +31,13 @@ self.addEventListener("fetch", (event) => {
   event.respondWith(
     fetch(request)
       .then((response) => {
-        if (response.ok && request.mode === "navigate") {
+        if (response.ok && request.mode === "navigate" && url.pathname.startsWith("/app")) {
           const clone = response.clone();
-          caches.open(CACHE).then((cache) => cache.put("/", clone));
+          caches.open(CACHE).then((cache) => cache.put("/app", clone));
         }
         return response;
       })
-      .catch(() => caches.match(request).then((cached) => cached || caches.match("/"))),
+      .catch(() => caches.match(request).then((cached) => cached || caches.match("/app"))),
   );
 });
 

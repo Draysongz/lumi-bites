@@ -23,6 +23,7 @@ model User {
   sessions    Session[]
   customer    Customer?
   orders      Order[]
+  cart        Cart?
   bookings    CateringBooking[]
   notifications Notification[]
   pushSubscriptions PushSubscription[]
@@ -128,6 +129,7 @@ model MenuItem {
   category    String?
 
   orderItems OrderItem[]
+  cartItems  CartItem[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -143,6 +145,12 @@ model Order {
   status      OrderStatus @default(PENDING)
   pickupDate  DateTime?   @db.Date // pre-order target day
   totalKobo   Int
+
+  // Delivery details captured at checkout.
+  recipientName  String?
+  recipientPhone String?
+  address        String?
+  landmark       String?
 
   items       OrderItem[]
   transaction Transaction?
@@ -171,9 +179,47 @@ model OrderItem {
   menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
 
   quantity Int
-  unitKobo Int // snapshot of price at order time
+  unitKobo Int // snapshot of price at order time (base dish + chosen sides)
+
+  // Line-item customization captured at dish page.
+  spice String?  // "mild" | "lumis-hot" | "extra-fiery"
+  sides String?  // comma-joined side ids, e.g. "dodo,jollof"
+  note  String?  // special kitchen instruction
 
   @@index([orderId])
+}
+
+// Ephemeral server-side cart, keyed to a customer.
+model Cart {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  items CartItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CartItem {
+  id     String @id @default(cuid())
+  cartId String
+  cart   Cart   @relation(fields: [cartId], references: [id], onDelete: Cascade)
+
+  menuItemId String
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
+
+  quantity Int
+  unitKobo Int // base dish + chosen sides, snapshot at add time
+
+  spice String?
+  sides String?
+  note  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([cartId])
 }
 
 // Payment state, keyed to a provider transaction reference

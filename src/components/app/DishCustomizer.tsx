@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { formatNaira } from "@/lib/format";
 import { SPICE_OPTIONS, SIDE_OPTIONS } from "@/lib/menu-options";
 
@@ -14,9 +14,12 @@ export type CustomizerDish = {
 };
 
 export default function DishCustomizer({ dish }: { dish: CustomizerDish }) {
+  const router = useRouter();
   const [spice, setSpice] = useState("lumis-hot");
   const [sides, setSides] = useState<Set<string>>(new Set(["dodo"]));
   const [quantity, setQuantity] = useState(1);
+  const [note, setNote] = useState("");
+  const [adding, setAdding] = useState(false);
 
   const sideTotal = SIDE_OPTIONS.filter((s) => sides.has(s.id)).reduce(
     (sum, s) => sum + s.priceKobo,
@@ -30,6 +33,26 @@ export default function DishCustomizer({ dish }: { dish: CustomizerDish }) {
       next.has(id) ? next.delete(id) : next.add(id);
       return next;
     });
+  }
+
+  async function addToBites() {
+    setAdding(true);
+    try {
+      await fetch("/api/cart", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          menuItemId: dish.id,
+          quantity,
+          spice,
+          sides: [...sides],
+          note: note.trim() || undefined,
+        }),
+      });
+      router.push("/app/cart");
+    } finally {
+      setAdding(false);
+    }
   }
 
   return (
@@ -168,6 +191,8 @@ export default function DishCustomizer({ dish }: { dish: CustomizerDish }) {
         </label>
         <textarea
           rows={2}
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
           placeholder="e.g. Please wrap the pepper sauce in a separate foil container..."
           className="w-full px-4 py-3 rounded-xl border border-light-outline-variant bg-light-surface text-light-on-surface placeholder:text-light-outline/70 focus:border-brand-red focus:ring-1 focus:ring-brand-red text-body-md"
         />
@@ -197,16 +222,18 @@ export default function DishCustomizer({ dish }: { dish: CustomizerDish }) {
           </button>
         </div>
 
-        <Link
-          href="/app/cart"
-          className="w-full sm:flex-1 flex items-center justify-between px-6 py-3.5 sm:py-4 rounded-2xl bg-brand-red text-white font-label text-label-lg font-black hover:brightness-110 active:scale-98 transition-state-change shadow-lg shadow-brand-red/30"
+        <button
+          type="button"
+          onClick={addToBites}
+          disabled={adding}
+          className="w-full sm:flex-1 flex items-center justify-between px-6 py-3.5 sm:py-4 rounded-2xl bg-brand-red text-white font-label text-label-lg font-black hover:brightness-110 active:scale-98 transition-state-change shadow-lg shadow-brand-red/30 disabled:opacity-60 disabled:cursor-not-allowed"
         >
           <div className="flex items-center gap-2.5">
             <span className="material-symbols-outlined text-xl sm:text-2xl">shopping_bag</span>
-            <span>Add to Bites</span>
+            <span>{adding ? "Adding…" : "Add to Bites"}</span>
           </div>
           <span className="font-display text-lg sm:text-xl">{formatNaira(total)}</span>
-        </Link>
+        </button>
       </div>
 
       {/* Security chip */}
