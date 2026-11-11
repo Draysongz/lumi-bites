@@ -8,7 +8,7 @@ export default function FinalCta() {
           fast and yummy, good for your tummy
         </span>
         <h2 className="font-display text-headline-lg-mobile sm:text-display-md lg:text-[40px] font-black text-white leading-tight">
-          Craving Chef Lumi&apos;s Famous Grilled Fish or Party Jollof?
+          Craving Chef Lumi&apos;s Famous Chicken Sandwich or Party Jollof?
         </h2>
         <p className="text-body-lg text-white/90 max-w-xl mx-auto">
           Check today&apos;s freshly prepared batch before orders close for the evening.
