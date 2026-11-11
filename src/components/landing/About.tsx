@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { DISH_IMAGES } from "@/lib/dishImages";
+import { DISH_IMAGES } from "@/lib/images";
 
 
   
