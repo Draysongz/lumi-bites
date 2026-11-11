@@ -1,3 +1,7 @@
+import { DISH_IMAGES } from "@/lib/dishImages"; // adjust path
+
+
+
 const dishes = [
   {
     name: "Whole Grilled Croaker Fish",
@@ -7,7 +11,7 @@ const dishes = [
     rating: "4.9 (148)",
     time: "30-40 min",
     timeLabel: "Spicy",
-    img: "https://lh3.googleusercontent.com/aida/ALJJyrBVHd3JRTt0SvVuUxBOLYdJlO66bp3hdDysv23kuDgjXnWIV3DYo-GSdMEcl4uX3W5DM_CxfwX4yyWHJxvBE0r2cKYaT0CAjK2C7axuYxCDJ8JojTNq2KS4v031qmN9m6r03tjVvHgQYR07wmJ5gpPQ0-TlhHVHOe7ClM-Ja6wymJgKXDT2b0jQub8avLVsVR3hR4i964zy0d3vmtCQAooKsnQyer83VHjZvoDI2Qo7PkbDlWGbEKLMfkA",
+    img: DISH_IMAGES.croaker,
   },
   {
     name: "Smokey Party Jollof & Grilled Chicken",
@@ -17,7 +21,7 @@ const dishes = [
     rating: "4.8 (215)",
     time: "20-25 min",
     timeLabel: "Mild Pepper",
-    img: "https://lh3.googleusercontent.com/aida/ALJJyrCZNtR6XyEHC0IhJtvoANjehKM8hZbJd-w-ojLnjnwXMRHWjPkgzbxBUk67MF9pavIQfDkhrJYKFn6UvUK4uF7BxmPvxBKT0ZUhCidknyU6AiVPr6tsjf24x3mK56A4C_LtPdB6ISMYBb3Klb8uo-vEjEmzE_XxPQUJxzQO1kg-LvsHtdI6NUXMrlcErVvQ4thX_nOfZYSCHt081XGFQz8MOxVEYsvf_sPs_i6MfgUk3Mo-EooRkCqF8y4dvmUreA",
+    img: DISH_IMAGES.jollof,
   },
   {
     name: "Spicy Beef Suya Skewers (4 Sticks)",
@@ -27,7 +31,7 @@ const dishes = [
     rating: "4.9 (98)",
     time: "15-20 min",
     timeLabel: "Extra Yaji",
-    img: "https://lh3.googleusercontent.com/aida/ALJJyrAlutw5_FIVYCMv_8LnfbjcsZPxVFvspecjwrvpwA6ZKZ-j9BySm9khNh0RGElBqSpEZqvS1YEkkKwDQIAc9Vy4HE4_ACG-MarLp4ftx2zab0c_X_n3y5iTw-M7i3tU5Iwfe1jk34_Ng2GLkYsQJWHG2_3GIXByiQ5-_Lh_LLW9TguKqZK9ySK6uEtBf7ozHlJ858PTGy8jDLk4PAfpb1ViTMgv4OAB_ej3UEjY2Mon5pmod1-WBiayID08",
+    img: DISH_IMAGES.suya,
   },
   {
     name: "Rich Egusi Soup & Pounded Yam",
@@ -37,7 +41,7 @@ const dishes = [
     rating: "4.9",
     time: "25 min",
     timeLabel: "Traditional",
-    img: "https://lh3.googleusercontent.com/aida/ALJJyrARmQ3b_IrMu-MljneCX6FBnPpmlQaN7mT5QcDDGNnSOgfv144UNdqpXuAuaiNbAc2wJiK2jlnBo73gAcUoej58M_Ve_eLE0nGnZRacUsybfNsf5FhPqUDsMB6winhPT46bED-FeiNd3vkeEKXL5mv9bRr8hKe4oZGCn89VLeMWRIMxV_hAFMhgKNlPDDm5q3KqEQ6Ye4Na5cmHG569OZy5Fn9FbgtzB2PRQkqcmwkwOJVAjoKXtm8qZjAz40df-gZT",
+    img: DISH_IMAGES.egusi,
   },
 ];
 
