@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn, getSession } from "next-auth/react";
 import Link from "next/link";
+import { DISH_IMAGES } from "@/lib/images";
 
 function GoogleMark() {
   return (
@@ -154,7 +155,9 @@ export default function LoginPage() {
 
             <div className="relative z-10 p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 flex items-center gap-4">
               <div className="w-20 h-20 rounded-xl bg-light-surface-container flex items-center justify-center shrink-0 text-light-outline-variant">
-                <span className="material-symbols-outlined text-4xl">set_meal</span>
+                <span className="material-symbols-outlined text-4xl">
+                  <img src={DISH_IMAGES.croaker} alt="Croaker Fish" />
+                </span>
               </div>
               <div className="space-y-1">
                 <span className="text-xs font-bold text-amber-300 font-label uppercase tracking-wider">
