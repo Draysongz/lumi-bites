@@ -13,7 +13,7 @@ export async function GET(_req: Request, { params }: Params) {
 
     const order = await prisma.order.findUnique({
       where: { id },
-      include: { items: { include: { menuItem: true } }, transaction: true },
+      include: { items: { include: { dish: true } }, transaction: true },
     });
 
     if (!order) return handleApiError(new Error("NOT_FOUND"));

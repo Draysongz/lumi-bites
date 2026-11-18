@@ -8,7 +8,7 @@ import { SIDE_OPTIONS } from "@/lib/menu-options";
 const SIDE_PRICE = new Map(SIDE_OPTIONS.map((s) => [s.id, s.priceKobo]));
 
 type OrderItemInput = {
-  menuItemId: string;
+  dishId: string;
   quantity: number;
   spice?: string;
   sides?: string[];
@@ -29,7 +29,8 @@ export async function GET(req: Request) {
       where,
       orderBy: { createdAt: "desc" },
       include: {
-        items: { include: { menuItem: true } },
+        user: { select: { id: true, name: true, phone: true, email: true } },
+        items: { include: { dish: true } },
         transaction: true,
       },
     });
@@ -57,23 +58,22 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "items[] is required" }, { status: 400 });
     }
 
-    // Load menu items to compute totals & validate availability.
-    const ids = body.items.map((i) => i.menuItemId);
-    const menuItems = await prisma.menuItem.findMany({ where: { id: { in: ids } } });
+    // Load dishes to compute totals.
+    const ids = body.items.map((i) => i.dishId);
+    const dishes = await prisma.dish.findMany({ where: { id: { in: ids } } });
 
-    const byId = new Map(menuItems.map((m) => [m.id, m]));
+    const byId = new Map(dishes.map((m) => [m.id, m]));
     let totalKobo = 0;
     const itemsData = body.items.map((it) => {
-      const menuItem = byId.get(it.menuItemId);
-      if (!menuItem) throw new Error("NOT_FOUND");
-      if (!menuItem.available) throw new Error("MenuItem unavailable");
+      const dish = byId.get(it.dishId);
+      if (!dish) throw new Error("NOT_FOUND");
       const quantity = Math.max(1, Math.floor(it.quantity || 1));
       const sides = Array.isArray(it.sides) ? it.sides : [];
-      let unitKobo = menuItem.priceKobo;
+      let unitKobo = dish.priceKobo;
       for (const id of sides) unitKobo += SIDE_PRICE.get(id) ?? 0;
       totalKobo += unitKobo * quantity;
       return {
-        menuItemId: menuItem.id,
+        dishId: dish.id,
         quantity,
         unitKobo,
         spice: it.spice || null,
@@ -100,7 +100,7 @@ export async function POST(req: Request) {
           },
         },
       },
-      include: { items: { include: { menuItem: true } }, transaction: true },
+      include: { items: { include: { dish: true } }, transaction: true },
     });
 
     return NextResponse.json({ order }, { status: 201 });

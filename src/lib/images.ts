@@ -1,24 +1,26 @@
 /**
- * Provisional dish images (from the prototype HTML) keyed by a stable slug/substring.
- * Used as a fallback when MenuItem.imageUrl is null, so cards always show food.
- * Replace with real uploaded/CDN URLs as the admin starts uploading images.
+ * Fallback dish images keyed by a stable slug/substring.
+ * Used when a MenuItem.imageUrl is null so cards always render something.
+ * Local files live in public/images/ — upload new ones there and extend the map.
+ *
+ * TODO: no dedicated fish/croaker photo yet — `croaker` currently reuses the
+ * jollof plate (img1.jpg). Drop in a real fish image and repoint it.
  */
 
-const DISH_IMAGES = {
-  croaker: "/images/img1.jpg", // assumed: swap if img1 is a different dish
-  jollof:
-    "https://lh3.googleusercontent.com/aida/ALJJyrCZ...your existing jollof URL...",
+export const DISH_IMAGES: Record<string, string> = {
+  croaker: "/images/img1.jpg",
+  jollof: "/images/img1.jpg",
   suya: "/images/suya.jpg",
   egusi: "/images/egusi.jpg",
-} as const;
+};
 
-export { DISH_IMAGES };
-
+/** Return a fallback image for a dish named `name`, or null if unknown. */
 export function lookupDishImage(name: string): string | null {
   const n = name.toLowerCase();
-  if (n.includes("croaker") || n.includes("fish")) return DISH_IMAGES.croaker;
   if (n.includes("jollof")) return DISH_IMAGES.jollof;
   if (n.includes("suya")) return DISH_IMAGES.suya;
   if (n.includes("egusi") || n.includes("soup") || n.includes("pounded")) return DISH_IMAGES.egusi;
+  if (n.includes("croaker") || n.includes("fish") || n.includes("catfish"))
+    return DISH_IMAGES.croaker;
   return null;
 }

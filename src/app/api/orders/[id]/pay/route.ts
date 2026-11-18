@@ -33,6 +33,7 @@ export async function POST(_req: Request, { params }: Params) {
     if (order.transaction?.accountNumber) {
       return NextResponse.json({
         accountNumber: order.transaction.accountNumber,
+        bankName: order.transaction.bankName ?? "Bank Transfer",
         amountNaira: Math.round(order.totalKobo / 100),
         reference,
       });
@@ -45,13 +46,18 @@ export async function POST(_req: Request, { params }: Params) {
 
     await prisma.transaction.upsert({
       where: { orderId: order.id },
-      update: { accountNumber: account.account_number, reference },
+      update: {
+        accountNumber: account.account_number,
+        bankName: account.bank_name,
+        reference,
+      },
       create: {
         orderId: order.id,
         reference,
         amountKobo: order.totalKobo,
         status: "PENDING",
         accountNumber: account.account_number,
+        bankName: account.bank_name,
       },
     });
 

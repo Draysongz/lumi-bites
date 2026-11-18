@@ -2,22 +2,50 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { lookupDishImage } from "@/lib/images";
+import { resolveImageUrl } from "@/lib/storage";
+import { lagosTodayStart, lagosTodayEnd } from "@/lib/date";
 import DishCustomizer from "@/components/app/DishCustomizer";
+import DishGallery from "@/components/app/DishGallery";
 
 export const dynamic = "force-dynamic";
 
 type Params = { params: Promise<{ id: string }> };
 
-// Decorative gallery thumbs (sibling dishes) — the dish itself has one image.
-const GALLERY_SAMPLES = ["jollof", "suya", "egusi"];
-
 export default async function DishDetailPage({ params }: Params) {
   const { id } = await params;
 
-  const dish = await prisma.menuItem.findUnique({ where: { id } });
+  const dish = await prisma.dish.findUnique({ where: { id } });
   if (!dish) notFound();
 
-  const image = dish.imageUrl ?? lookupDishImage(dish.name) ?? undefined;
+  // Today's live publishing (portions) for this dish, if published today.
+  const todayDish = await prisma.dayDish.findFirst({
+    where: {
+      dishId: dish.id,
+      dayMenu: {
+        date: { gte: lagosTodayStart(), lt: lagosTodayEnd() },
+        active: true,
+      },
+    },
+    select: { portionsLeft: true },
+  });
+
+  const image =
+    (await resolveImageUrl(dish.imageUrl)) ?? lookupDishImage(dish.name) ?? undefined;
+
+  // Sibling dishes (other live dishes published today), for a gallery.
+  const siblings = await prisma.dish.findMany({
+    where: {
+      id: { not: dish.id },
+      dayDishes: { some: { available: true } },
+    },
+    select: { name: true, imageUrl: true },
+  });
+
+  const siblingImages = await Promise.all(
+    siblings.map(async (s) => (await resolveImageUrl(s.imageUrl)) ?? lookupDishImage(s.name)),
+  );
+
+  const galleryImages = [image, ...siblingImages].filter((src): src is string => !!src);
 
   return (
     <div className="max-w-7xl mx-auto px-4 lg:px-8 py-4 lg:py-10">
@@ -39,69 +67,12 @@ export default async function DishDetailPage({ params }: Params) {
       <div className="grid grid-cols-12 gap-6 lg:gap-12 items-start">
         {/* Left: media + chef notes */}
         <div className="col-span-12 lg:col-span-7 space-y-6 lg:sticky lg:top-28">
-          <div className="relative w-full h-72 lg:h-[460px] rounded-3xl overflow-hidden bg-brand-dark border border-light-outline-variant/60 shadow-lg group">
-            {image ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={image}
-                alt={dish.name}
-                className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-light-outline-variant">
-                <span className="material-symbols-outlined text-7xl">restaurant</span>
-              </div>
-            )}
-            <div className="absolute inset-0 bg-gradient-to-t from-brand-dark/85 via-transparent to-transparent" />
-
-            <div className="absolute top-5 left-5 flex items-center gap-2">
-              <span className="px-3.5 py-1.5 rounded-full bg-brand-red text-white font-label text-label-sm font-bold uppercase tracking-wider shadow-sm">
-                Chef Signature Catch
-              </span>
-              {typeof dish.rating === "number" && (
-                <span className="px-3 py-1.5 rounded-full bg-brand-dark/90 text-white font-label text-label-sm font-bold flex items-center gap-1.5 backdrop-blur-md">
-                  <span className="material-symbols-outlined text-base text-brand-yellow">star</span>
-                  {dish.rating.toFixed(1)}
-                </span>
-              )}
-            </div>
-
-            <div className="absolute bottom-6 left-6 right-6 text-white space-y-1">
-              <span className="text-label-sm text-amber-300 font-label font-bold uppercase tracking-wider block">
-                fast and yummy, good for your tummy
-              </span>
-              <h2 className="font-display text-2xl lg:text-3xl font-black text-white leading-tight">
-                {dish.name}
-              </h2>
-              {dish.description && (
-                <p className="text-body-sm text-stone-200 line-clamp-2">{dish.description}</p>
-              )}
-            </div>
-          </div>
-
-          {/* Thumbnail gallery (decorative) */}
-          <div className="hidden lg:grid grid-cols-4 gap-4">
-            <div className="h-24 rounded-2xl overflow-hidden border-2 border-brand-red shadow-xs cursor-pointer">
-              {image && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={image} alt="Thumb 1" className="w-full h-full object-cover" />
-              )}
-            </div>
-            {GALLERY_SAMPLES.map((key) => {
-              const src = lookupDishImage(key);
-              return (
-                <div
-                  key={key}
-                  className="h-24 rounded-2xl overflow-hidden border border-light-outline-variant/60 opacity-75 hover:opacity-100 transition-opacity cursor-pointer"
-                >
-                  {src && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={src} alt="Thumb" className="w-full h-full object-cover" />
-                  )}
-                </div>
-              );
-            })}
-          </div>
+          <DishGallery
+            name={dish.name}
+            description={dish.description}
+            rating={dish.rating}
+            images={galleryImages}
+          />
 
           {/* Freshness / hygiene box */}
           <div className="hidden lg:grid p-6 rounded-2xl bg-light-surface-container border border-light-outline-variant/60 grid-cols-3 gap-4 text-center">
@@ -139,7 +110,7 @@ export default async function DishDetailPage({ params }: Params) {
               name: dish.name,
               description: dish.description,
               priceKobo: dish.priceKobo,
-              portionsLeft: dish.portionsLeft,
+              portionsLeft: todayDish?.portionsLeft ?? null,
             }}
           />
         </div>

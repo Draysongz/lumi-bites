@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { lagosTodayStart, lagosTodayEnd } from "@/lib/date";
 import { formatNaira } from "@/lib/format";
 import { lookupDishImage } from "@/lib/images";
+import { resolveImageUrl } from "@/lib/storage";
 import DishCard, { type DishCardItem } from "@/components/app/DishCard";
 import MenuSidebar, { type SidebarItem } from "@/components/app/MenuSidebar";
 import Link from "next/link";
@@ -21,10 +22,30 @@ export default async function TodayMenuPage() {
       date: { gte: lagosTodayStart(), lt: lagosTodayEnd() },
       active: true,
     },
-    include: { items: { where: { available: true }, orderBy: { createdAt: "asc" } } },
+    include: {
+      dayDishes: {
+        where: { available: true },
+        orderBy: { createdAt: "asc" },
+        include: { dish: true },
+      },
+    },
   });
 
-  const items = menu?.items ?? [];
+  // Flatten DayDish → customer dish shape (per-day portions from DayDish),
+  // resolving any Neon-bucket image to a presigned URL.
+  const items = await Promise.all(
+    (menu?.dayDishes ?? []).map(async (dd) => ({
+      id: dd.dish.id,
+      name: dd.dish.name,
+      description: dd.dish.description,
+      priceKobo: dd.dish.priceKobo,
+      imageUrl: await resolveImageUrl(dd.dish.imageUrl),
+      rating: dd.dish.rating,
+      portionsLeft: dd.portionsLeft,
+      category: dd.dish.category,
+    })),
+  );
+
   const featured = items[0];
   const featuredImage = featured ? featured.imageUrl ?? lookupDishImage(featured.name) : null;
 

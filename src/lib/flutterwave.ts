@@ -77,6 +77,26 @@ export async function createDynamicAccount(input: {
   }).then((r) => r.data);
 }
 
+export type FlwVerifyResult = {
+  status: string; // "successful" | "failed" | ...
+  currency?: string;
+  amount?: number;
+  tx_ref?: string;
+  flw_ref?: string;
+  payment_type?: string;
+};
+
+/**
+ * Poll Flutterwave for the authoritative status of a transaction by its tx_ref.
+ * Used as a webhook fallback (pull-based verification).
+ */
+export async function verifyTransaction(txRef: string): Promise<FlwVerifyResult | null> {
+  const data = await request<{ data: FlwVerifyResult | null }>(
+    `/transactions/verify_by_reference?tx_ref=${encodeURIComponent(txRef)}`,
+  );
+  return data.data;
+}
+
 /** Initialize a card/USSD/bank-transfer checkout — Flutterwave takes naira, not kobo. */
 export async function initializeTransaction(input: {
   email: string;

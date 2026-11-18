@@ -7,11 +7,13 @@ export async function POST(req: Request) {
   try {
     const body = (await req.json().catch(() => null)) as {
       name?: string;
+      phone?: string;
       email?: string;
       password?: string;
     } | null;
 
     const name = body?.name?.trim();
+    const phone = body?.phone?.trim() || null;
     const email = body?.email?.trim().toLowerCase();
     const password = body?.password;
 
@@ -42,11 +44,21 @@ export async function POST(req: Request) {
       );
     }
 
+    if (phone) {
+      const existingPhone = await prisma.user.findUnique({ where: { phone } });
+      if (existingPhone) {
+        return NextResponse.json(
+          { error: "An account with this phone number already exists" },
+          { status: 409 },
+        );
+      }
+    }
+
     const passwordHash = await hashPassword(password);
 
     const user = await prisma.user.create({
-      data: { name, email, passwordHash },
-      select: { id: true, name: true, email: true },
+      data: { name, phone, email, passwordHash },
+      select: { id: true, name: true, email: true, phone: true },
     });
 
     return NextResponse.json({ user }, { status: 201 });

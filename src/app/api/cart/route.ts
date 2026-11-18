@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { handleApiError } from "@/lib/api";
 import { SIDE_OPTIONS } from "@/lib/menu-options";
+import { resolveImageUrl } from "@/lib/storage";
 
 const SIDE_PRICE = new Map(SIDE_OPTIONS.map((s) => [s.id, s.priceKobo]));
 
@@ -13,7 +14,17 @@ function unitKoboFor(baseKobo: number, sideIds: string[]): number {
   return total;
 }
 
-const itemInclude = { menuItem: true } as const;
+const itemInclude = { dish: true } as const;
+
+/** Resolve each line item's dish image to a viewable (presigned) URL. */
+async function resolveItems<T extends { dish: { imageUrl: string | null } }>(items: T[]) {
+  return Promise.all(
+    items.map(async (it) => ({
+      ...it,
+      dish: { ...it.dish, imageUrl: await resolveImageUrl(it.dish.imageUrl) },
+    })),
+  );
+}
 
 /** GET /api/cart — the signed-in customer's cart with line items. */
 export async function GET() {
@@ -23,14 +34,15 @@ export async function GET() {
       where: { userId: user.id },
       include: { items: { include: itemInclude, orderBy: { createdAt: "asc" } } },
     });
-    return NextResponse.json({ items: cart?.items ?? [] });
+    const items = await resolveItems(cart?.items ?? []);
+    return NextResponse.json({ items });
   } catch (err) {
     return handleApiError(err);
   }
 }
 
 type AddBody = {
-  menuItemId: string;
+  dishId: string;
   quantity?: number;
   spice?: string;
   sides?: string[];
@@ -43,13 +55,12 @@ export async function POST(req: Request) {
     const user = await requireUser();
     const body = (await req.json()) as AddBody;
 
-    if (!body.menuItemId) {
-      return NextResponse.json({ error: "menuItemId is required" }, { status: 400 });
+    if (!body.dishId) {
+      return NextResponse.json({ error: "dishId is required" }, { status: 400 });
     }
 
-    const menuItem = await prisma.menuItem.findUnique({ where: { id: body.menuItemId } });
-    if (!menuItem) return handleApiError(new Error("NOT_FOUND"));
-    if (!menuItem.available) throw new Error("MenuItem unavailable");
+    const dish = await prisma.dish.findUnique({ where: { id: body.dishId } });
+    if (!dish) return handleApiError(new Error("NOT_FOUND"));
 
     const sides = Array.isArray(body.sides) ? body.sides : [];
     const spice = body.spice || null;
@@ -67,14 +78,14 @@ export async function POST(req: Request) {
     const existing = await prisma.cartItem.findFirst({
       where: {
         cartId: cart.id,
-        menuItemId: menuItem.id,
+        dishId: dish.id,
         spice: spice,
         sides: sidesKey,
         note: note,
       },
     });
 
-    const unitKobo = unitKoboFor(menuItem.priceKobo, sides);
+    const unitKobo = unitKoboFor(dish.priceKobo, sides);
 
     if (existing) {
       await prisma.cartItem.update({
@@ -85,7 +96,7 @@ export async function POST(req: Request) {
       await prisma.cartItem.create({
         data: {
           cartId: cart.id,
-          menuItemId: menuItem.id,
+          dishId: dish.id,
           quantity,
           unitKobo,
           spice,
@@ -99,7 +110,8 @@ export async function POST(req: Request) {
       where: { userId: user.id },
       include: { items: { include: itemInclude, orderBy: { createdAt: "asc" } } },
     });
-    return NextResponse.json({ items: updated?.items ?? [] });
+    const items = await resolveItems(updated?.items ?? []);
+    return NextResponse.json({ items });
   } catch (err) {
     return handleApiError(err);
   }
@@ -140,7 +152,8 @@ export async function PATCH(req: Request) {
       where: { userId: user.id },
       include: { items: { include: itemInclude, orderBy: { createdAt: "asc" } } },
     });
-    return NextResponse.json({ items: updated?.items ?? [] });
+    const items = await resolveItems(updated?.items ?? []);
+    return NextResponse.json({ items });
   } catch (err) {
     return handleApiError(err);
   }

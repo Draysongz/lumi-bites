@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatNaira } from "@/lib/format";
 import { SPICE_OPTIONS, SIDE_OPTIONS } from "@/lib/menu-options";
+import { useCart } from "./CartProvider";
 
 export type CustomizerDish = {
   id: string;
@@ -15,6 +16,7 @@ export type CustomizerDish = {
 
 export default function DishCustomizer({ dish }: { dish: CustomizerDish }) {
   const router = useRouter();
+  const { add } = useCart();
   const [spice, setSpice] = useState("lumis-hot");
   const [sides, setSides] = useState<Set<string>>(new Set(["dodo"]));
   const [quantity, setQuantity] = useState(1);
@@ -38,16 +40,12 @@ export default function DishCustomizer({ dish }: { dish: CustomizerDish }) {
   async function addToBites() {
     setAdding(true);
     try {
-      await fetch("/api/cart", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          menuItemId: dish.id,
-          quantity,
-          spice,
-          sides: [...sides],
-          note: note.trim() || undefined,
-        }),
+      await add({
+        dishId: dish.id,
+        quantity,
+        spice,
+        sides: [...sides],
+        note: note.trim() || undefined,
       });
       router.push("/app/cart");
     } finally {

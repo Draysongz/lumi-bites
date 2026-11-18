@@ -108,33 +108,48 @@ model DayMenu {
   active Boolean @default(true)
   dailyNote String?
 
-  items MenuItem[]
+  dayDishes DayDish[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-model MenuItem {
+// Permanent dish catalog — entered once, published to any day via DayDish.
+model Dish {
   id        String  @id @default(cuid())
-  dayMenuId String
-  dayMenu   DayMenu @relation(fields: [dayMenuId], references: [id], onDelete: Cascade)
-
   name        String
   description String?
   priceKobo   Int // price in kobo (NGN × 100) to avoid float rounding
-  available   Boolean @default(true)
   imageUrl    String?
   rating      Float?
-  portionsLeft Int?
   category    String?
+  prepTime    String? // e.g. "30–40 mins"
+  spice       String? // selected spice preset, e.g. "mild,lumis-hot,extra-fiery"
 
+  dayDishes  DayDish[]
   orderItems OrderItem[]
   cartItems  CartItem[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
 
-  @@index([dayMenuId])
+// Per-day publish: which dishes are live today + their stock.
+model DayDish {
+  id        String @id @default(cuid())
+  dayMenuId String
+  dayMenu   DayMenu @relation(fields: [dayMenuId], references: [id], onDelete: Cascade)
+  dishId    String
+  dish      Dish    @relation(fields: [dishId], references: [id], onDelete: Cascade)
+
+  portionsLeft Int?
+  available    Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([dayMenuId, dishId])
+  @@index([dishId])
 }
 
 model Order {
@@ -175,8 +190,8 @@ model OrderItem {
   orderId   String
   order     Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
-  menuItemId String
-  menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
+  dishId String
+  dish   Dish   @relation(fields: [dishId], references: [id])
 
   quantity Int
   unitKobo Int // snapshot of price at order time (base dish + chosen sides)
@@ -206,8 +221,8 @@ model CartItem {
   cartId String
   cart   Cart   @relation(fields: [cartId], references: [id], onDelete: Cascade)
 
-  menuItemId String
-  menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
+  dishId String
+  dish   Dish   @relation(fields: [dishId], references: [id])
 
   quantity Int
   unitKobo Int // base dish + chosen sides, snapshot at add time
@@ -237,6 +252,7 @@ model Transaction {
 
   // Dynamic (per-transaction) virtual-account details from Flutterwave.
   accountNumber String?
+  bankName      String?
   accountExpires DateTime?
 
   createdAt DateTime @default(now())
@@ -260,6 +276,15 @@ model CateringBooking {
   eventType   String
   guestCount  Int
   notes       String?  @db.Text
+
+  // Contact / logistics details captured at intake.
+  clientName  String?
+  clientPhone String?
+  company     String?
+  venue       String?
+  address     String?
+  menuItems   String? @db.Text // free-form requested dishes breakdown
+
   quoteKobo   Int?
   depositKobo Int? // optional part-payment for events
   status      BookingStatus @default(INQUIRY)

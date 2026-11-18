@@ -1,24 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatNaira } from "@/lib/format";
 import { lookupDishImage } from "@/lib/images";
 import { SPICE_OPTIONS, SIDE_OPTIONS } from "@/lib/menu-options";
-
-type CartItem = {
-  id: string;
-  quantity: number;
-  unitKobo: number;
-  spice: string | null;
-  sides: string | null;
-  note: string | null;
-  menuItem: {
-    id: string;
-    name: string;
-    imageUrl: string | null;
-  };
-};
+import { useCart, type CartLine } from "@/components/app/CartProvider";
+import PayModal from "./PayModal";
 
 const PACKAGING_KOBO = 50_000; // ₦500 thermal packaging
 const DISPATCH_KOBO = 150_000; // ₦1,500 rider fee
@@ -38,10 +26,16 @@ function sidesLabel(ids: string | null) {
 
 export default function CartCheckoutPage() {
   const router = useRouter();
-  const [items, setItems] = useState<CartItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { items, loading, setQuantity, clear } = useCart();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [payInfo, setPayInfo] = useState<{
+    orderId: string;
+    reference: string;
+    accountNumber: string;
+    bankName: string;
+    amountKobo: number;
+  } | null>(null);
 
   // Delivery form state.
   const [recipientName, setRecipientName] = useState("");
@@ -49,41 +43,12 @@ export default function CartCheckoutPage() {
   const [address, setAddress] = useState("");
   const [landmark, setLandmark] = useState("");
 
-  const loadCart = useCallback(async () => {
-    try {
-      const res = await fetch("/api/cart");
-      if (!res.ok) throw new Error("Failed to load cart");
-      const data = (await res.json()) as { items: CartItem[] };
-      setItems(data.items);
-    } catch {
-      setItems([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadCart();
-  }, [loadCart]);
-
   const itemsSubtotal = items.reduce((sum, i) => sum + i.unitKobo * i.quantity, 0);
   const fees = PACKAGING_KOBO + DISPATCH_KOBO;
   const total = itemsSubtotal + fees;
 
-  async function updateQuantity(item: CartItem, quantity: number) {
-    const res = await fetch("/api/cart", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ cartItemId: item.id, quantity }),
-    });
-    if (res.ok) {
-      const data = (await res.json()) as { items: CartItem[] };
-      setItems(data.items);
-    }
-  }
-
-  async function removeItem(item: CartItem) {
-    await updateQuantity(item, 0);
+  function removeItem(item: CartLine) {
+    setQuantity(item.id, 0);
   }
 
   async function confirmAndPay() {
@@ -97,7 +62,7 @@ export default function CartCheckoutPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           items: items.map((i) => ({
-            menuItemId: i.menuItem.id,
+            dishId: i.dish.id,
             quantity: i.quantity,
             spice: i.spice ?? undefined,
             sides: i.sides ? i.sides.split(",") : undefined,
@@ -128,15 +93,20 @@ export default function CartCheckoutPage() {
         accountNumber?: string;
         bankName?: string;
         amountNaira?: number;
+        reference?: string;
       };
 
-      // 3. Clear the server cart.
-      await fetch("/api/cart", { method: "DELETE" });
+      // 3. Clear the cart (updates the shared header badge too).
+      await clear();
 
-      // 4. Route to tracking with the dynamic-account instructions.
-      router.push(
-        `/app/orders?pay=${encodeURIComponent(JSON.stringify(pay))}`,
-      );
+      // 4. Open the payment modal — customer pays first, THEN reaches tracking.
+      setPayInfo({
+        orderId: order.id,
+        reference: pay.reference ?? `LB-${order.id.slice(-4).toUpperCase()}`,
+        accountNumber: pay.accountNumber ?? "",
+        bankName: pay.bankName ?? "Bank Transfer",
+        amountKobo: Math.round((pay.amountNaira ?? 0) * 100),
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -205,7 +175,7 @@ export default function CartCheckoutPage() {
               </div>
 
               {items.map((item) => {
-                const img = item.menuItem.imageUrl ?? lookupDishImage(item.menuItem.name) ?? undefined;
+                const img = item.dish.imageUrl ?? lookupDishImage(item.dish.name) ?? undefined;
                 const spice = spiceLabel(item.spice);
                 const sides = sidesLabel(item.sides);
                 return (
@@ -218,7 +188,7 @@ export default function CartCheckoutPage() {
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
                           src={img}
-                          alt={item.menuItem.name}
+                          alt={item.dish.name}
                           className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover shrink-0 border border-light-outline-variant/50"
                         />
                       ) : (
@@ -228,7 +198,7 @@ export default function CartCheckoutPage() {
                       )}
                       <div className="space-y-1 min-w-0">
                         <h3 className="font-headline text-headline-sm text-light-on-surface font-bold truncate">
-                          {item.menuItem.name}
+                          {item.dish.name}
                         </h3>
                         {(spice || sides) && (
                           <p className="text-body-sm text-light-outline truncate">
@@ -261,14 +231,14 @@ export default function CartCheckoutPage() {
                       </button>
                       <div className="flex items-center border border-light-outline-variant rounded-xl bg-light-surface px-2 py-1">
                         <button
-                          onClick={() => updateQuantity(item, item.quantity - 1)}
+                          onClick={() => setQuantity(item.id, item.quantity - 1)}
                           className="w-6 h-6 flex items-center justify-center text-light-outline hover:text-light-on-surface active:scale-95"
                         >
                           <span className="material-symbols-outlined text-sm">remove</span>
                         </button>
                         <span className="w-7 text-center font-bold text-label-md">{item.quantity}</span>
                         <button
-                          onClick={() => updateQuantity(item, item.quantity + 1)}
+                          onClick={() => setQuantity(item.id, item.quantity + 1)}
                           className="w-6 h-6 flex items-center justify-center text-light-outline hover:text-light-on-surface active:scale-95"
                         >
                           <span className="material-symbols-outlined text-sm">add</span>
@@ -448,6 +418,10 @@ export default function CartCheckoutPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {payInfo && (
+        <PayModal pay={payInfo} onClose={() => setPayInfo(null)} />
       )}
     </div>
   );
